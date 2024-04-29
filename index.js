@@ -4,12 +4,17 @@ import axios from "axios";
 const app = express();
 const port = 3000;
 
-let leagues = [
+app.use(express.static("public"));
+
+let tournaments = [
     "premier-league",
-    "championship",
+    "champions-league",
+    "europa-league",
+    "europa-conference-league",
     "italian-serie-a",
     "spanish-la-liga",
     "german-bundesliga",
+    "championship",
     "french-ligue-1",
     "league-one",
     "league-two",
@@ -22,12 +27,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/games/:date", async (req, res) => {
-    let results = await GetAllGamesOnDay(req.params.date);
-    res.send(results.join("<br/>"));
-});
-
-app.get("/api/fixtures/", (req, res) => {
-    
+    let tournamentsWithMatches = await GetAllGamesOnDay(req.params.date);
+    res.render("home.ejs", {tournamentsWithMatches: tournamentsWithMatches})
 });
 
 app.listen(port, () => {
@@ -35,29 +36,44 @@ app.listen(port, () => {
 });
 
 async function GetAllGamesOnDay(date){
-    return await GetAllLeagueGamesOnDay(date);
+    let _tournaments = tournaments;
+    let listOfTournamentsWithMatches = [];
+    for (let i = 0; i < _tournaments.length; i++) {
+        const tournament = tournaments[i];
+        listOfTournamentsWithMatches.push(await GetAllTournamentGamesOnDay(tournament, date));
+    }
+    console.log(listOfTournamentsWithMatches);
+    return listOfTournamentsWithMatches;
 }
 
-async function GetAllLeagueGamesOnDay(date){
-    let results = [];
-    for (let i = 0; i < leagues.length; i++) {
-        const league = leagues[i];
-        
-        const result = await axios.get("https://push.api.bbci.co.uk/batch?t=/data/bbc-morph-sportsdata-soccer-fixture-list-tournament/date/" + date + "/tournament/" + league + "/version/2.2.3?timeout=5")
-        const data = result.data;
-        let games = [];
-        try {
-            games = Object.values(data.payload[0].body.rounds[0].events);
-            //console.log(league, games);
-            for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
-                const game = games[gameIndex];
-                let gameScore = game.homeTeam.name.abbreviation + " " + game.homeTeam.scores.fullTime + " v " + game.awayTeam.scores.fullTime + " " + game.awayTeam.name.abbreviation;
-                results.push(gameScore);
-            }
-        } catch (error) {
-            console.log(error);
-        }
-        console.log(results.length);
+async function GetAllTournamentGamesOnDay(tournament, date){
+
+    const result = await axios.get("https://push.api.bbci.co.uk/batch?t=/data/bbc-morph-sportsdata-soccer-fixture-list-tournament/date/" + date + "/tournament/" + tournament + "/version/2.2.3?timeout=5")
+    const data = result.data;
+    let matchesData = [];
+    
+
+    try {
+        matchesData = data.payload[0].body.rounds[0].events;
+    } catch (error) {
+        //console.log(error);
     }
-    return results;
+
+    let matches = [];
+    for (let i = 0; i < matchesData.length; i++) {
+        const match = matchesData[i];
+
+        matches.push({
+            homeTeam: match.homeTeam.name.abbreviation,
+            awayTeam: match.awayTeam.name.abbreviation,
+            score: [match.homeTeam.scores.score, match.awayTeam.scores.score]
+        })
+    }
+    
+    return {
+        tournament: tournament,
+        matches: matches
+    };
+
+    // 
 }

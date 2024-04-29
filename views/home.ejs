@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="nav">
+
+    </div>
+    <div class="games-list">
+        <% if (locals.tournamentsWithMatches) {
+            for (let i = 0; i < tournamentsWithMatches.length; i++) { 
+                if (tournamentsWithMatches[i].matches.length > 0) {  %>
+                    <div class="tournamentTitle">
+                        <h2><%= tournamentsWithMatches[i].tournament %></h2>
+                    </div>
+                    <% for (let matchIndex = 0; matchIndex < tournamentsWithMatches[i].matches.length; matchIndex++) {
+                        const match = tournamentsWithMatches[i].matches[matchIndex]; %>
+                        
+                        <div>
+                            <h3><%= match.homeTeam %> v <%= match.awayTeam %></h3>
+                            <% if (match.score[0] !== null) { %>
+                                <h2><%= match.score[0] %> - <%= match.score[1] %></h2>
+                            <% } %>
+                            
+                        </div>
+
+                     <% } %>
+            <%  }
+            }
+        } %>
+    </div>
+
+    <input type="date" id="dateInput">
+    <button onclick="NewDate()">Submit</button>
+
+    <script>
+        function NewDate() {
+            window.location.href = "/games/" + document.getElementById("dateInput").value;
+        }    
+    </script>
+</body>
+</html>
