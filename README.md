@@ -1,1 +1,1 @@
-Live Football Results and Info API
+Live Football Results and Info API.
